@@ -1,0 +1,30 @@
+<table id="issues-table" class="table table-striped table-hover">
+        <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Room</th>
+            <th>Issues</th>
+            <th>Status</th>
+            <th>Submitted At</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for issue in issues %}
+        <tr>
+            <td>{{ issue.id }}</td>
+            <td>{{ issue.room }}</td>
+            <td>{{ issue.issues }}</td>
+            <td>
+            <form method="POST" action="{{ url_for('update_status', issue_id=issue.id) }}">
+                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                {% for s in ['Pending', 'In Progress', 'Resolved'] %}
+                    <option value="{{ s }}" {% if issue.status == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+                </select>
+            </form>
+            </td>
+            <td>{{ issue.submitted_at }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+</table>
