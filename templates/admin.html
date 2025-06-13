@@ -8,6 +8,19 @@
 </head>
 <body class="bg-light">
 
+    <!-- Admin Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
+      <div class="container-fluid">
+        <span class="navbar-brand">Admin Panel</span>
+        <div class="d-flex ms-auto">
+          <span class="navbar-text text-light me-3">
+            Logged in as: {{ session.get('admin_username') }}
+          </span>
+          <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">Logout</a>
+        </div>
+      </div>
+    </nav>
+
     <!-- Toast Notifications -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -42,14 +55,73 @@
 
         <!-- Live-Refreshing Table -->
         <div id="live-issues"
-             hx-get="/admin?status={{ status }}&partial=1"
-             hx-trigger="every 2s"
-             hx-swap="outerHTML">
+              hx-get="/admin?status={{ status }}&partial=1"
+              hx-trigger="every 2s"
+              hx-swap="outerHTML">
             {% include 'partials/_issues_table.html' %}
         </div>
 
         <!-- Back to Report Form -->
         <a href="{{ url_for('index') }}" class="btn btn-secondary mt-3">← Back to Form</a>
+
+        {% if session.get('admin_role') == 'superadmin' %}
+        <hr class="my-5">
+        <h4>👥 Manage Admin Accounts</h4>
+
+        <!-- Add New Admin -->
+        <form action="{{ url_for('add_admin') }}" method="POST" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <input type="text" name="name" placeholder="Full Name" class="form-control" required>
+            </div>
+            <div class="col-md-2">
+                <input type="text" name="username" placeholder="Username" class="form-control" required>
+            </div>
+            <div class="col-md-2">
+                <input type="password" name="password" placeholder="Password" class="form-control" required>
+            </div>
+            <div class="col-md-2">
+                <select name="role" class="form-select" required>
+                    <option value="admin">Admin</option>
+                    <option value="superadmin">Superadmin</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-success w-100">Add Admin</button>
+            </div>
+        </form>
+
+        <!-- List of Admins -->
+        <table class="table table-bordered table-sm">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for admin in admin_list %}
+                <tr>
+                    <td>{{ admin.id }}</td>
+                    <td>{{ admin.name }}</td>
+                    <td>{{ admin.username }}</td>
+                    <td>{{ admin.role }}</td>
+                    <td>
+                        {% if admin.username != session.get('admin_username') %}
+                        <form action="{{ url_for('delete_admin', admin_id=admin.id) }}" method="POST" onsubmit="return confirm('Delete this admin?')">
+                            <button class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                        {% else %}
+                        <span class="text-muted">Current</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
     </div>
 
     <!-- Bootstrap JS and Toast Activation -->
