@@ -1,0 +1,18 @@
+# Python virtual environment
+venv/
+
+# Environment variables
+.env
+
+# Pycache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Flask debug logs
+*.log
+
+# VS Code and other IDE settings
+.vscode/
+.idea/
