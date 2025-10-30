@@ -1,56 +1,72 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Manage Admins</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
+{% extends "base.html" %}
+{% block title %}Manage Admins{% endblock %}
 
-    <div class="container mt-5">
-        <h2>👑 Manage Admins</h2>
+{% block content %}
+<div class="container mt-4">
+  <h2>Manage Admins</h2>
 
-        <!-- Add New Admin -->
-        <form class="row g-3 mt-4 mb-5" method="POST" action="{{ url_for('add_admin') }}">
-            <div class="col-md-3">
-                <input type="text" name="name" placeholder="Full Name" class="form-control" required>
-            </div>
-            <div class="col-md-3">
-                <input type="text" name="username" placeholder="Username" class="form-control" required>
-            </div>
-            <div class="col-md-3">
-                <input type="password" name="password" placeholder="Password" class="form-control" required>
-            </div>
-            <div class="col-md-3">
-                <button type="submit" class="btn btn-primary">Add Admin</button>
-            </div>
-        </form>
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5 class="card-title">Add new admin</h5>
 
-        <!-- Admin List -->
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Name</th><th>Username</th><th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for admin in admins %}
-                <tr>
-                    <td>{{ admin.name }}</td>
-                    <td>{{ admin.username }}</td>
-                    <td>
-                        <form action="{{ url_for('delete_admin', admin_id=admin.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this admin?');">
-                            <button class="btn btn-sm btn-danger">Remove</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+      <!-- Add-admin form -->
+      <form method="post" action="{{ url_for('add_admin') }}" class="row g-2">
+        {{ form.hidden_tag() }}   <!-- IMPORTANT: CSRF token + hidden fields -->
 
-        <!-- Back -->
-        <a href="{{ url_for('admin') }}" class="btn btn-secondary">← Back to Admin Panel</a>
+        <div class="col-md-4">
+          <label class="form-label">Full name</label>
+          {{ form.name(class="form-control", placeholder="Full name (optional)") }}
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Username</label>
+          {{ form.username(class="form-control", placeholder="username") }}
+        </div>
+
+        <div class="col-md-3">
+          <label class="form-label">Password</label>
+          {{ form.password(class="form-control", placeholder="password", type="password") }}
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100">Add Admin</button>
+        </div>
+      </form>
     </div>
+  </div>
 
-</body>
-</html>
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Existing admins</h5>
+      <table class="table table-sm">
+        <thead>
+          <tr><th>#</th><th>Name</th><th>Username</th><th>Role</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          {% for a in admins %}
+          <tr>
+            <td>{{ a.id }}</td>
+            <td>{{ a.name or '-' }}</td>
+            <td>{{ a.username }}</td>
+            <td>{{ a.role }}</td>
+            <td>
+              {% if session.role == 'superadmin' and a.role == 'admin' %}
+                <!-- Delete form uses delete_form (FlaskForm) for CSRF -->
+                <form method="post" action="{{ url_for('delete_admin', user_id=a.id) }}" style="display:inline">
+                  {{ delete_form.hidden_tag() }}
+                  <button class="btn btn-sm btn-danger" type="submit" onclick="return confirm('Delete admin?')">Delete</button>
+                </form>
+              {% else %}
+                &mdash;
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="5">No admins yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

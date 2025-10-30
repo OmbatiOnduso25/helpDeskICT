@@ -1,139 +1,160 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Admin Panel - Submitted Issues</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
-</head>
-<body class="bg-light">
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
 
-    <!-- Admin Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-      <div class="container-fluid">
-        <span class="navbar-brand">Admin Panel</span>
-        <div class="d-flex ms-auto">
-          <span class="navbar-text text-light me-3">
-            Logged in as: {{ session.get('admin_username') }}
-          </span>
-          <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">Logout</a>
-        </div>
-      </div>
-    </nav>
+{% block content %}
+<div class="row mb-3">
+  <div class="col-8">
+    <h3 class="mb-0"><i class="bi bi-speedometer2 me-2"></i> Admin Dashboard</h3>
+    <p class="small text-muted">Overview of recent issues and quick actions.</p>
+  </div>
+  <div class="col-4 text-end">
+    <a class="btn btn-outline-secondary btn-icon" href="{{ url_for('reports') }}"><i class="bi bi-bar-chart-line me-1"></i> Reports</a>
+    <a class="btn btn-outline-primary btn-icon ms-2" href="{{ url_for('manage_admins') }}"><i class="bi bi-people me-1"></i> Manage Admins</a>
+    <a class="btn btn-outline-success btn-icon ms-2" href="{{ url_for('reports_pdf', period=request.args.get('period','weekly')) }}"><i class="bi bi-file-earmark-pdf me-1"></i> Export PDF</a>
+  </div>
+</div>
 
-    <!-- Toast Notifications -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
-          {% for category, message in messages %}
-            <div class="toast align-items-center text-bg-{{ 'success' if category == 'success' else 'danger' }} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
-              <div class="d-flex">
-                <div class="toast-body">
-                  {{ message }}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
+<div class="row g-3 mb-3">
+  <div class="col-md-3">
+    <div class="card stat-card p-3">
+      <div class="label">Total issues</div>
+      <h2 class="mb-0">{{ pagination.total if pagination is defined else report.total_issues if report is defined else issues|length }}</h2>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card p-3">
+      <div class="label">Pending</div>
+      <h2 class="mb-0">{{ report.by_status.get('Pending', 0) if report is defined and report.by_status is defined else 0 }}</h2>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card p-3">
+      <div class="label">In Progress</div>
+      <h2 class="mb-0">{{ report.by_status.get('In Progress', 0) if report is defined and report.by_status is defined else 0 }}</h2>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card p-3">
+      <div class="label">Resolved</div>
+      <h2 class="mb-0">{{ report.by_status.get('Resolved', 0) if report is defined and report.by_status is defined else 0 }}</h2>
+    </div>
+  </div>
+</div>
 
-    <div class="container mt-5">
-        <h2 class="mb-4">📋 Submitted ICT Issues</h2>
-
-        <!-- Status Filter Dropdown -->
-        <form class="row mb-3" method="get">
-            <div class="col-auto">
-                <select class="form-select" name="status" onchange="this.form.submit()">
-                    {% for s in ['All', 'Pending', 'In Progress', 'Resolved'] %}
-                        <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </form>
-
-        <!-- Live-Refreshing Table -->
-        <div id="live-issues"
-              hx-get="/admin?status={{ status }}&partial=1"
-              hx-trigger="every 2s"
-              hx-swap="outerHTML">
-            {% include 'partials/_issues_table.html' %}
-        </div>
-
-        <!-- Back to Report Form -->
-        <a href="{{ url_for('index') }}" class="btn btn-secondary mt-3">← Back to Form</a>
-
-        {% if session.get('admin_role') == 'superadmin' %}
-        <hr class="my-5">
-        <h4>👥 Manage Admin Accounts</h4>
-
-        <!-- Add New Admin -->
-        <form action="{{ url_for('add_admin') }}" method="POST" class="row g-3 mb-4">
-            <div class="col-md-3">
-                <input type="text" name="name" placeholder="Full Name" class="form-control" required>
-            </div>
-            <div class="col-md-2">
-                <input type="text" name="username" placeholder="Username" class="form-control" required>
-            </div>
-            <div class="col-md-2">
-                <input type="password" name="password" placeholder="Password" class="form-control" required>
-            </div>
-            <div class="col-md-2">
-                <select name="role" class="form-select" required>
-                    <option value="admin">Admin</option>
-                    <option value="superadmin">Superadmin</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <button class="btn btn-success w-100">Add Admin</button>
-            </div>
-        </form>
-
-        <!-- List of Admins -->
-        <table class="table table-bordered table-sm">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Username</th>
-                    <th>Role</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for admin in admin_list %}
-                <tr>
-                    <td>{{ admin.id }}</td>
-                    <td>{{ admin.name }}</td>
-                    <td>{{ admin.username }}</td>
-                    <td>{{ admin.role }}</td>
-                    <td>
-                        {% if admin.username != session.get('admin_username') %}
-                        <form action="{{ url_for('delete_admin', admin_id=admin.id) }}" method="POST" onsubmit="return confirm('Delete this admin?')">
-                            <button class="btn btn-danger btn-sm">Delete</button>
-                        </form>
-                        {% else %}
-                        <span class="text-muted">Current</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
+<div class="card p-3 shadow-sm mb-3">
+  <!-- Search form (uses search_form from view) -->
+  <form method="GET" action="{{ url_for('search') }}" class="row g-2 mb-3 align-items-end">
+    {{ search_form.hidden_tag() }}
+    <div class="col-md-4">
+      <label class="form-label small text-muted">Search</label>
+      <input name="q" type="search" class="form-control" placeholder="Search issues or details..." value="{{ request.args.get('q','') }}">
     </div>
 
-    <!-- Bootstrap JS and Toast Activation -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const toastElList = [].slice.call(document.querySelectorAll('.toast'));
-            toastElList.forEach(function (toastEl) {
-                new bootstrap.Toast(toastEl).show();
-            });
-        });
-    </script>
+    <div class="col-md-3">
+      <label class="form-label small text-muted">Category</label>
+      <select name="category" class="form-select">
+        <option value="">All categories</option>
+        {% for c in categories %}
+          <option value="{{ c }}" {% if request.args.get('category') == c %}selected{% endif %}>{{ c|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </div>
 
-</body>
-</html>
+    <div class="col-md-2">
+      <label class="form-label small text-muted">Status</label>
+      <select name="status" class="form-select">
+        <option value="">All statuses</option>
+        <option value="Pending" {% if request.args.get('status') == 'Pending' %}selected{% endif %}>Pending</option>
+        <option value="In Progress" {% if request.args.get('status') == 'In Progress' %}selected{% endif %}>In Progress</option>
+        <option value="Resolved" {% if request.args.get('status') == 'Resolved' %}selected{% endif %}>Resolved</option>
+      </select>
+    </div>
+
+    <div class="col-md-2 d-grid">
+      <button class="btn btn-outline-primary" type="submit"><i class="bi bi-search me-1"></i> Search</button>
+    </div>
+  </form>
+
+  <!-- Filter / sort form (existing controls) -->
+  <form method="GET" class="row g-2 mb-0 align-items-end">
+    <div class="col-auto">
+      <label class="form-label small text-muted">Category</label>
+      <select name="category" class="form-select">
+        <option value="All" {% if selected_category=='All' %}selected{% endif %}>All</option>
+        {% for c in categories %}
+          <option value="{{ c }}" {% if selected_category==c %}selected{% endif %}>{{ c|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <label class="form-label small text-muted">Sort</label>
+      <select name="sort" class="form-select">
+        <option value="id_desc" {% if selected_sort=='id_desc' %}selected{% endif %}>Newest</option>
+        <option value="id_asc" {% if selected_sort=='id_asc' %}selected{% endif %}>Oldest</option>
+        <option value="date_desc" {% if selected_sort=='date_desc' %}selected{% endif %}>Date desc</option>
+        <option value="date_asc" {% if selected_sort=='date_asc' %}selected{% endif %}>Date asc</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <button class="btn btn-primary"><i class="bi bi-funnel-fill me-1"></i> Filter</button>
+    </div>
+  </form>
+</div>
+
+<!-- Issues table -->
+<div class="card p-3 shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover table-sm align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>#</th>
+          <th>Room</th>
+          <th>Issues</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Submitted</th>
+          <th>Assigned</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in issues %}
+        <tr>
+          <td>{{ i.id }}</td>
+          <td>{{ i.room }}</td>
+          <td style="max-width:320px;white-space:pre-wrap;">{{ i.issues }}</td>
+          <td>{{ i.category or '-' }}</td>
+          <td>{{ i.status }}</td>
+          <td>{{ i.submitted_at.strftime('%Y-%m-%d %H:%M') if i.submitted_at else '-' }}</td>
+          <td>{{ i.assigned_admin or '-' }}</td>
+          <td class="text-end">
+            {% if session.role in ['admin','superadmin'] %}
+              {% if not i.assigned_admin_id %}
+                <form method="post" action="{{ url_for('assign_issue', issue_id=i.id) }}" style="display:inline">
+                  {{ assign_form.hidden_tag() }}
+                  <button type="submit" class="btn btn-sm btn-primary" onclick="return confirm('Assign this issue to you?')">Assign to me</button>
+                </form>
+              {% else %}
+                <span class="badge bg-secondary">Assigned</span>
+              {% endif %}
+
+              <form method="post" action="{{ url_for('update_status', issue_id=i.id) }}" style="display:inline">
+                {{ assign_form.hidden_tag() }}
+                <input type="hidden" name="status" value="Resolved">
+                <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Mark as resolved?')">Resolve</button>
+              </form>
+            {% else %}
+              &mdash;
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" class="text-center text-muted">No issues found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

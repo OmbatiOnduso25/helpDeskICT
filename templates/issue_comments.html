@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Issue Comments{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <div class="card shadow-sm p-3">
+      <h4>Issue #{{ issue.id }}</h4>
+      <p class="small-muted mb-2">Room: {{ issue.room }}</p>
+      <p>{{ issue.details or issue.issues }}</p>
+      <hr>
+      <div id="comments">
+        {% for c in comments %}
+          <div class="mb-2"><strong>{{ c.username }}</strong> <small class="text-muted">{{ c.created_at }}</small><div>{{ c.comment }}</div></div>
+        {% else %}
+          <div class="text-muted">No comments yet.</div>
+        {% endfor %}
+      </div>
+      <hr>
+      <form method="POST">
+        {{ form.hidden_tag() if form is defined }}
+        <div class="mb-3">
+          <textarea name="comment" class="form-control" rows="3" required placeholder="Add a comment..."></textarea>
+        </div>
+        <button class="btn btn-primary">Add comment</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

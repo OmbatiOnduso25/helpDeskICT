@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}
+  My Issues
+{% endblock %}
+{% block content %}
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm p-3">
+        <h4>Your reported issues</h4>
+        <table class="table table-striped mt-3">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Room</th>
+              <th>Issue(s)</th>
+              <th>Status</th>
+              <th>Assigned</th>
+              <th>When</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for it in issues %}
+              <tr>
+                <td>{{ it.id }}</td>
+                <td>{{ it.room }}</td>
+                <td style="max-width:360px; white-space:pre-wrap">{{ it.issues }}</td>
+                <td>{{ it.status }}</td>
+                <td>{{ it.assigned_admin or '—' }}</td>
+                <td>{{ it.submitted_at }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="6" class="text-center">No issues yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}

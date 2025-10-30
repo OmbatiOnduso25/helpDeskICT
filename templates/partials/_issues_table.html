@@ -1,30 +1,55 @@
-<table id="issues-table" class="table table-striped table-hover">
-        <thead class="table-dark">
-        <tr>
-            <th>ID</th>
-            <th>Room</th>
-            <th>Issues</th>
-            <th>Status</th>
-            <th>Submitted At</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for issue in issues %}
-        <tr>
-            <td>{{ issue.id }}</td>
-            <td>{{ issue.room }}</td>
-            <td>{{ issue.issues }}</td>
-            <td>
-            <form method="POST" action="{{ url_for('update_status', issue_id=issue.id) }}">
-                <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                {% for s in ['Pending', 'In Progress', 'Resolved'] %}
-                    <option value="{{ s }}" {% if issue.status == s %}selected{% endif %}>{{ s }}</option>
-                {% endfor %}
-                </select>
-            </form>
-            </td>
-            <td>{{ issue.submitted_at }}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
+<table class="table table-hover">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Room</th>
+      <th>Issues</th>
+      <th>Category</th>
+      <th>Status</th>
+      <th>Assigned</th>
+      <th>Submitted</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for it in issues %}
+      <tr>
+        <td>{{ it.id }}</td>
+        <td>{{ it.room }}</td>
+        <td style="max-width:360px; white-space:pre-wrap">{{ it.issues }}</td>
+        <td>
+          {% if it.category %}
+            {% for cat in it.category.split(',') %}
+              <span class="badge badge-category me-1">{{ cat.strip() }}</span>
+            {% endfor %}
+          {% else %}
+            —
+          {% endif %}
+        </td>
+        <td>{{ it.status }}</td>
+        <td>{{ it.assigned_admin or '—' }}</td>
+        <td>{{ it.submitted_at }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('assign_issue', issue_id=it.id) }}" style="display:inline">
+            <button class="btn btn-sm btn-outline-success btn-icon" title="Pick this issue"><i class="bi bi-hand-index-thumb me-1"></i>Pick</button>
+          </form>
+          <form method="POST" action="{{ url_for('update_status', issue_id=it.id) }}" style="display:inline" class="ms-1">
+            <select name="status" class="form-select form-select-sm d-inline w-auto">
+              <option>Pending</option>
+              <option>In Progress</option>
+              <option>Resolved</option>
+            </select>
+            <button class="btn btn-sm btn-outline-primary ms-1 btn-icon" title="Update status"><i class="bi bi-arrow-repeat me-1"></i>Update</button>
+          </form>
+        </td>
+      </tr>
+    {% else %}
+      <tr>
+        <td colspan="8" class="text-center">No issues found.</td>
+      </tr>
+    {% endfor %}
+  </tbody>
 </table>
+{% if pagination is defined %}
+  <div class="d-flex justify-content-center mt-3">{{ pagination.links }}</div>
+{% endif %}

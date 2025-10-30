@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Search Results{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h3>Search Results</h3>
+
+  <form method="GET" action="{{ url_for('search') }}" class="row g-2 mb-3">
+    {{ form.hidden_tag() }}
+    <div class="col-md-4">
+      <input type="text" name="q" class="form-control" placeholder="Search..." value="{{ request.args.get('q','') }}">
+    </div>
+    <div class="col-md-3">
+      <select name="category" class="form-select">
+        <option value="">All categories</option>
+        {% for c in categories %}
+          <option value="{{ c }}" {% if request.args.get('category') == c %}selected{% endif %}>{{ c|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select name="status" class="form-select">
+        <option value="">All statuses</option>
+        <option value="Pending" {% if request.args.get('status') == 'Pending' %}selected{% endif %}>Pending</option>
+        <option value="In Progress" {% if request.args.get('status') == 'In Progress' %}selected{% endif %}>In Progress</option>
+        <option value="Resolved" {% if request.args.get('status') == 'Resolved' %}selected{% endif %}>Resolved</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-primary w-100">Search</button>
+    </div>
+  </form>
+
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Results</h5>
+      <table class="table table-sm">
+        <thead>
+          <tr><th>#</th><th>Room</th><th>Issue</th><th>Category</th><th>Status</th><th>Submitted</th><th>Assigned</th></tr>
+        </thead>
+        <tbody>
+          {% for i in issues %}
+          <tr>
+            <td>{{ i.id }}</td>
+            <td>{{ i.room }}</td>
+            <td>{{ i.issues }}</td>
+            <td>{{ i.category }}</td>
+            <td>{{ i.status }}</td>
+            <td>{{ i.submitted_at }}</td>
+            <td>{{ i.assigned_admin or '-' }}</td>
+          </tr>
+          {% else %}
+          <tr><td colspan="7">No results found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

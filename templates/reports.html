@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Reports{% endblock %}
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-12 d-flex justify-content-between align-items-center mb-3">
+    <h3>Reports — {{ report.period|capitalize if report is defined else 'Overview' }}</h3>
+    <a class="btn btn-outline-primary" href="{{ url_for('reports_pdf', period=request.args.get('period','weekly')) }}"><i class="bi bi-file-earmark-pdf me-1"></i> Export PDF</a>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card shadow-sm p-3">
+      <h6>Top Issues</h6>
+      <ul class="list-unstyled mt-2">
+        {% for it,cnt in report.top_issues %}
+          <li>{{ it }} <span class="badge bg-secondary">{{ cnt }}</span></li>
+        {% else %}
+          <li class="text-muted">No data</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="col-md-8">
+    <div class="card shadow-sm p-3">
+      <canvas id="timeseriesChart" height="120"></canvas>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  (function(){
+    try {
+      const labels = {{ report.time_series.labels|tojson }};
+      const counts = {{ report.time_series.counts|tojson }};
+      const ctx = document.getElementById('timeseriesChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: { labels: labels, datasets: [{ label: 'Issues', data: counts, tension: 0.25, fill: true }] },
+        options: { responsive:true, plugins:{legend:{display:false}} }
+      });
+    } catch(e) { console.warn('Chart skipped', e); }
+  })();
+</script>
+{% endblock %}
